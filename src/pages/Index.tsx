@@ -7,14 +7,17 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 
 interface AnalysisResult {
-  signal: 'BUY' | 'SELL';
+  signal: 'ВВЕРХ' | 'ВНИЗ';
   confidence: number;
+  timeframe: string;
+  expiration: string;
   indicators: {
     trend: string;
     momentum: string;
     volume: string;
   };
   analysis: string;
+  entry_point: string;
 }
 
 export default function Index() {
@@ -44,54 +47,108 @@ export default function Index() {
     
     const scenarios = [
       {
-        signal: 'BUY' as const,
-        confidence: 78,
+        signal: 'ВВЕРХ' as const,
+        confidence: 83,
+        timeframe: '1 минута',
+        expiration: '1-2 минуты',
         indicators: {
-          trend: 'Восходящий тренд с пробитием уровня сопротивления',
-          momentum: 'RSI показывает силу покупателей (65)',
-          volume: 'Объем растет на зеленых свечах'
+          trend: 'Формирование бычьей свечи Pin Bar',
+          momentum: 'RSI(14) = 58, выход из зоны 50',
+          volume: 'Объем на текущей свече +40%'
         },
-        analysis: 'График показывает четкий восходящий тренд. Цена пробила ключевой уровень сопротивления с увеличением объема. MACD дает бычий сигнал. Рекомендуется вход на откате к пробитому уровню.'
+        analysis: 'Цена отбилась от уровня поддержки с длинной нижней тенью. Индикатор Stochastic показывает разворот вверх из зоны перепроданности. MACD формирует бычий кросс.',
+        entry_point: 'Входить на закрытии текущей свечи'
       },
       {
-        signal: 'SELL' as const,
-        confidence: 82,
+        signal: 'ВНИЗ' as const,
+        confidence: 79,
+        timeframe: '1 минута',
+        expiration: '1-2 минуты',
         indicators: {
-          trend: 'Нисходящий тренд с lower highs и lower lows',
-          momentum: 'Медвежья дивергенция на RSI',
-          volume: 'Высокий объем на красных свечах'
+          trend: 'Медвежье поглощение на сопротивлении',
+          momentum: 'RSI(14) = 68, отбой от зоны перекупленности',
+          volume: 'Сильное давление продавцов'
         },
-        analysis: 'Формируется медвежий паттерн "голова и плечи". Цена не смогла пробить сопротивление и откатывается вниз. Индикаторы подтверждают слабость. Рекомендуется short-позиция со стоп-лоссом выше последнего максимума.'
+        analysis: 'График формирует паттерн "медвежье поглощение" у ключевого уровня. Bollinger Bands показывают перекупленность. Ожидается коррекция вниз.',
+        entry_point: 'Сигнал активен следующие 30-60 секунд'
       },
       {
-        signal: 'BUY' as const,
-        confidence: 71,
+        signal: 'ВВЕРХ' as const,
+        confidence: 86,
+        timeframe: '5 минут',
+        expiration: '5-10 минут',
         indicators: {
-          trend: 'Консолидация с пробоем вверх',
-          momentum: 'Стохастик выходит из зоны перепроданности',
-          volume: 'Растущий объем подтверждает движение'
+          trend: 'Пробой линии тренда с ретестом',
+          momentum: 'MACD гистограмма растет, линии выше нуля',
+          volume: 'Объем подтверждает движение вверх'
         },
-        analysis: 'После периода боковика цена пробивает верхнюю границу канала. Появились признаки накопления. EMA 50 пересекает EMA 200 снизу вверх (золотой крест). Хорошая точка для входа в длинную позицию.'
+        analysis: 'Цена пробила нисходящую линию тренда и успешно протестировала её как поддержку. EMA(9) пересекла EMA(21) снизу вверх. Все сигналы на рост.',
+        entry_point: 'Входить при ретесте пробитого уровня'
       },
       {
-        signal: 'SELL' as const,
-        confidence: 75,
+        signal: 'ВНИЗ' as const,
+        confidence: 81,
+        timeframe: '1 минута',
+        expiration: '1-3 минуты',
         indicators: {
-          trend: 'Двойная вершина на сопротивлении',
-          momentum: 'Слабеющий импульс на новых максимумах',
-          volume: 'Падающий объем при росте - признак слабости'
+          trend: 'Три последовательных красных свечи',
+          momentum: 'Стохастик в зоне перекупленности (>80)',
+          volume: 'Продажи превышают покупки на 35%'
         },
-        analysis: 'Классический разворотный паттерн "двойная вершина". Цена дважды не смогла пробить уровень сопротивления. Объемы падают, что говорит об истощении покупателей. Ожидается коррекция к уровню поддержки.'
+        analysis: 'Четкий нисходящий импульс. Цена отклонилась от верхней полосы Боллинджера и возвращается к средней линии. ADX показывает силу тренда >25.',
+        entry_point: 'Входить на текущем уровне'
       },
       {
-        signal: 'BUY' as const,
-        confidence: 85,
+        signal: 'ВВЕРХ' as const,
+        confidence: 77,
+        timeframe: '5 минут',
+        expiration: '5-15 минут',
         indicators: {
-          trend: 'Пробой треугольника вверх',
-          momentum: 'MACD пересекает сигнальную линию снизу вверх',
-          volume: 'Резкий скачок объема на пробое'
+          trend: 'Паттерн "Молот" на поддержке',
+          momentum: 'RSI дивергенция - цена ниже, RSI выше',
+          volume: 'Появление покупателей у уровня'
         },
-        analysis: 'Восходящий треугольник завершился пробоем вверх с сильным объемом. Это один из самых надежных бычьих сигналов. Цель движения - высота треугольника от точки пробоя. Оптимальный момент для входа.'
+        analysis: 'Свечной паттерн "Молот" сформировался точно на уровне Фибоначчи 61.8%. Индикаторы показывают накопление позиций для отскока вверх.',
+        entry_point: 'Ждать подтверждения - зеленая свеча'
+      },
+      {
+        signal: 'ВНИЗ' as const,
+        confidence: 84,
+        timeframe: '1 минута',
+        expiration: '1-2 минуты',
+        indicators: {
+          trend: 'Ложный пробой максимума (fakeout)',
+          momentum: 'RSI медвежья дивергенция',
+          volume: 'Объем на росте падает - слабость'
+        },
+        analysis: 'Цена попыталась обновить максимум, но не смогла закрепиться выше. Классический сигнал разворота. CCI показывает выход из экстремальной зоны вниз.',
+        entry_point: 'Входить после закрытия свечи ниже предыдущего максимума'
+      },
+      {
+        signal: 'ВВЕРХ' as const,
+        confidence: 88,
+        timeframe: '5 минут',
+        expiration: '5-10 минут',
+        indicators: {
+          trend: 'Двойное дно + пробой шеи',
+          momentum: 'MACD кросс вверх, гистограмма зеленая',
+          volume: '+60% на пробое'
+        },
+        analysis: 'Классический разворотный паттерн "Двойное дно" полностью сформирован. Цена пробила линию шеи с большим объемом. Цель - высота паттерна от пробоя.',
+        entry_point: 'Входить прямо сейчас или на откате к линии шеи'
+      },
+      {
+        signal: 'ВНИЗ' as const,
+        confidence: 76,
+        timeframe: '1 минута',
+        expiration: '1-2 минуты',
+        indicators: {
+          trend: 'Падающий клин прорван вниз',
+          momentum: 'Momentum индикатор уходит в отрицательную зону',
+          volume: 'Рост на продажах'
+        },
+        analysis: 'Паттерн продолжения тренда "Падающий клин" завершился пробоем нижней границы. Все краткосрочные MA направлены вниз. Коррекция продолжится.',
+        entry_point: 'Входить на текущих уровнях'
       }
     ];
     
@@ -99,8 +156,8 @@ export default function Index() {
     setResult(randomScenario);
     
     toast({
-      title: 'AI анализ завершен',
-      description: `Сигнал: ${randomScenario.signal} с уверенностью ${randomScenario.confidence}%`,
+      title: '📊 Анализ завершен',
+      description: `Сигнал: ${randomScenario.signal} | Экспирация: ${randomScenario.expiration}`,
     });
     
     setIsAnalyzing(false);
@@ -210,34 +267,53 @@ export default function Index() {
               </div>
             ) : (
               <div className="space-y-6 animate-in fade-in duration-500">
-                <div className="flex items-center justify-between p-6 rounded-lg bg-secondary/50 border border-border">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-2">Торговый сигнал</p>
-                    <div className="flex items-center gap-3">
-                      <Badge 
-                        className={`text-lg font-bold px-4 py-2 ${
-                          result.signal === 'BUY' 
-                            ? 'bg-[#00C853] hover:bg-[#00C853]/90 text-white' 
-                            : 'bg-[#FF1744] hover:bg-[#FF1744]/90 text-white'
-                        }`}
-                      >
-                        {result.signal === 'BUY' ? (
-                          <>
-                            <Icon name="TrendingUp" size={18} className="mr-2" />
-                            BUY
-                          </>
-                        ) : (
-                          <>
-                            <Icon name="TrendingDown" size={18} className="mr-2" />
-                            SELL
-                          </>
-                        )}
-                      </Badge>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-6 rounded-lg bg-secondary/50 border border-border">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">Сигнал для бинарных опционов</p>
+                      <div className="flex items-center gap-3">
+                        <Badge 
+                          className={`text-2xl font-bold px-6 py-3 ${
+                            result.signal === 'ВВЕРХ' 
+                              ? 'bg-[#00C853] hover:bg-[#00C853]/90 text-white' 
+                              : 'bg-[#FF1744] hover:bg-[#FF1744]/90 text-white'
+                          }`}
+                        >
+                          {result.signal === 'ВВЕРХ' ? (
+                            <>
+                              <Icon name="ArrowUp" size={24} className="mr-2" />
+                              ВВЕРХ
+                            </>
+                          ) : (
+                            <>
+                              <Icon name="ArrowDown" size={24} className="mr-2" />
+                              ВНИЗ
+                            </>
+                          )}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground mb-2">Уверенность</p>
+                      <p className="text-3xl font-bold text-primary">{result.confidence}%</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground mb-2">Уверенность</p>
-                    <p className="text-3xl font-bold text-primary">{result.confidence}%</p>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-lg bg-secondary/30 border border-border">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Icon name="Clock" size={16} className="text-primary" />
+                        <p className="text-xs text-muted-foreground">Таймфрейм</p>
+                      </div>
+                      <p className="text-lg font-bold">{result.timeframe}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-secondary/30 border border-border">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Icon name="Timer" size={16} className="text-primary" />
+                        <p className="text-xs text-muted-foreground">Экспирация</p>
+                      </div>
+                      <p className="text-lg font-bold">{result.expiration}</p>
+                    </div>
                   </div>
                 </div>
 
@@ -279,12 +355,22 @@ export default function Index() {
                   </div>
                 </div>
 
-                <div className="p-4 rounded-lg bg-secondary/30 border border-border">
-                  <p className="text-sm font-semibold mb-2 flex items-center gap-2">
-                    <Icon name="Info" size={16} className="text-primary" />
-                    Анализ
-                  </p>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{result.analysis}</p>
+                <div className="space-y-3">
+                  <div className="p-4 rounded-lg bg-secondary/30 border border-border">
+                    <p className="text-sm font-semibold mb-2 flex items-center gap-2">
+                      <Icon name="Info" size={16} className="text-primary" />
+                      Анализ
+                    </p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{result.analysis}</p>
+                  </div>
+
+                  <div className="p-4 rounded-lg bg-primary/10 border border-primary/30">
+                    <p className="text-sm font-semibold mb-2 flex items-center gap-2">
+                      <Icon name="Target" size={16} className="text-primary" />
+                      Точка входа
+                    </p>
+                    <p className="text-sm font-medium text-foreground">{result.entry_point}</p>
+                  </div>
                 </div>
               </div>
             )}
