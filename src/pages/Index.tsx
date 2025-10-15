@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/ui/icon';
@@ -20,6 +21,7 @@ export default function Index() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
+  const { toast } = useToast();
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -33,24 +35,45 @@ export default function Index() {
     }
   };
 
-  const analyzeChart = () => {
+  const analyzeChart = async () => {
+    if (!uploadedImage) return;
+    
     setIsAnalyzing(true);
     
-    setTimeout(() => {
-      const mockResult: AnalysisResult = {
-        signal: Math.random() > 0.5 ? 'BUY' : 'SELL',
-        confidence: Math.floor(Math.random() * 30) + 65,
-        indicators: {
-          trend: 'Восходящий тренд',
-          momentum: 'Сильный импульс',
-          volume: 'Растущий объем'
+    try {
+      const response = await fetch('https://functions.poehali.dev/6ea8fefb-d94b-4047-8284-442e2868e3c3', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        analysis: 'На основе технического анализа обнаружены сильные сигналы для входа в позицию. Рекомендуется установить стоп-лосс на уровне поддержки.'
-      };
+        body: JSON.stringify({
+          image: uploadedImage
+        })
+      });
       
-      setResult(mockResult);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Ошибка анализа');
+      }
+      
+      const data: AnalysisResult = await response.json();
+      setResult(data);
+      
+      toast({
+        title: 'Анализ завершен',
+        description: `Сигнал: ${data.signal} с уверенностью ${data.confidence}%`,
+      });
+      
+    } catch (error) {
+      console.error('Analysis error:', error);
+      toast({
+        title: 'Ошибка анализа',
+        description: error instanceof Error ? error.message : 'Не удалось проанализировать график',
+        variant: 'destructive'
+      });
+    } finally {
       setIsAnalyzing(false);
-    }, 2500);
+    }
   };
 
   return (
