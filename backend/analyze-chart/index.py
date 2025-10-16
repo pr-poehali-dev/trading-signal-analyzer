@@ -6,10 +6,10 @@ from openai import OpenAI
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     '''
-    Business: Анализирует торговые графики с помощью OpenAI Vision API
+    Business: Анализирует скриншот графика через GPT-4 Vision для бинарных опционов
     Args: event - dict с httpMethod, body (base64 изображение)
           context - объект с атрибутами request_id, function_name
-    Returns: HTTP response с торговым сигналом и анализом
+    Returns: HTTP response с торговым сигналом ВВЕРХ/ВНИЗ для бинарных опционов
     '''
     method: str = event.get('httpMethod', 'POST')
     
@@ -38,19 +38,30 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     try:
-        body_data = json.loads(event.get('body', '{}'))
-        image_data = body_data.get('image')
+        body_str = event.get('body', '{}')
+        if not body_str or body_str.strip() == '':
+            body_str = '{}'
+        body_data = json.loads(body_str)
+    except json.JSONDecodeError:
+        body_data = {}
+    
+    image_data = body_data.get('image')
+    
+    if not image_data:
+        return {
+            'statusCode': 400,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({'error': 'Image data is required'}),
+            'isBase64Encoded': False
+        }
+    
+    try:
         
-        if not image_data:
-            return {
-                'statusCode': 400,
-                'headers': {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                },
-                'body': json.dumps({'error': 'Image data is required'}),
-                'isBase64Encoded': False
-            }
+        if ',' in image_data:
+            image_data = image_data.split(',')[1]
         
         api_key = os.environ.get('OPENAI_API_KEY')
         if not api_key:
@@ -66,29 +77,30 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         client = OpenAI(api_key=api_key)
         
-        prompt = """Ты профессиональный трейдер и технический аналитик. 
-Проанализируй этот торговый график и дай точный торговый сигнал.
+        prompt = """Проанализируй этот торговый график для бинарных опционов. Ответь СТРОГО в формате JSON:
 
-Верни ответ СТРОГО в формате JSON:
 {
-  "signal": "BUY" или "SELL",
+  "signal": "ВВЕРХ" или "ВНИЗ",
   "confidence": число от 0 до 100,
+  "timeframe": "1 минута" или "5 минут",
+  "expiration": "1-2 минуты" или "5-10 минут",
   "indicators": {
-    "trend": "описание тренда",
-    "momentum": "описание импульса",
-    "volume": "описание объема"
+    "trend": "описание тренда и паттернов",
+    "momentum": "показатели импульса (RSI, MACD, Stochastic)",
+    "volume": "анализ объёмов торгов"
   },
-  "analysis": "краткий анализ 2-3 предложения"
+  "analysis": "детальный технический анализ (2-3 предложения)",
+  "entry_point": "рекомендация когда входить в сделку"
 }
 
 Анализируй:
-- Тренды и паттерны
+- Свечные паттерны (Pin Bar, Молот, Поглощение, Дожи)
 - Уровни поддержки/сопротивления
-- Технические индикаторы (если видны)
-- Объемы торгов
-- Свечные паттерны
+- Линии тренда и пробои
+- Индикаторы технического анализа
+- Momentum и силу движения
 
-Будь точным и конкретным."""
+Будь точным и конкретным. Указывай реальные значения индикаторов если видны на графике."""
 
         response = client.chat.completions.create(
             model="gpt-4o",
@@ -112,6 +124,15 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         ai_response = response.choices[0].message.content
         
+        ai_response = ai_response.strip()
+        if ai_response.startswith('```json'):
+            ai_response = ai_response[7:]
+        if ai_response.startswith('```'):
+            ai_response = ai_response[3:]
+        if ai_response.endswith('```'):
+            ai_response = ai_response[:-3]
+        ai_response = ai_response.strip()
+        
         result = json.loads(ai_response)
         
         return {
@@ -120,7 +141,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*'
             },
-            'body': json.dumps(result),
+            'body': json.dumps(result, ensure_ascii=False),
             'isBase64Encoded': False
         }
         
